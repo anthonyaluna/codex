@@ -10,6 +10,45 @@ from codex_app_server.models import UnknownNotification
 ROOT = Path(__file__).resolve().parents[1]
 
 
+def test_default_approval_handler_declines_privileged_requests() -> None:
+    client = AppServerClient()
+
+    assert client._handle_server_request(
+        {
+            "id": "command-approval",
+            "method": "item/commandExecution/requestApproval",
+            "params": {"reason": "requires elevated access"},
+        }
+    ) == {"decision": "decline"}
+    assert client._handle_server_request(
+        {
+            "id": "file-approval",
+            "method": "item/fileChange/requestApproval",
+            "params": {"reason": "requires file changes"},
+        }
+    ) == {"decision": "decline"}
+
+
+def test_explicit_approval_handler_controls_privileged_requests() -> None:
+    handled: list[tuple[str, dict[str, Any] | None]] = []
+
+    def approve(method: str, params: dict[str, Any] | None) -> dict[str, Any]:
+        handled.append((method, params))
+        return {"decision": "accept"}
+
+    client = AppServerClient(approval_handler=approve)
+    params = {"reason": "approved by the application"}
+
+    assert client._handle_server_request(
+        {
+            "id": "command-approval",
+            "method": "item/commandExecution/requestApproval",
+            "params": params,
+        }
+    ) == {"decision": "accept"}
+    assert handled == [("item/commandExecution/requestApproval", params)]
+
+
 def test_thread_set_name_and_compact_use_current_rpc_methods() -> None:
     client = AppServerClient()
     calls: list[tuple[str, dict[str, Any] | None]] = []

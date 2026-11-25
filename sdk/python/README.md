@@ -17,6 +17,10 @@ build explicitly.
 
 ## Quickstart
 
+`AppServerClient` declines command-execution and file-change approval requests by
+default. Applications that need to approve a request can supply an explicit
+`approval_handler` and return a decision for the specific request.
+
 ```python
 from codex_app_server import Codex, TextInput
 

@@ -134,7 +134,10 @@ class AppServerConfig:
 
 
 class AppServerClient:
-    """Synchronous typed JSON-RPC client for `codex app-server` over stdio."""
+    """Synchronous typed JSON-RPC client for `codex app-server` over stdio.
+
+    Command-execution and file-change approvals are declined unless an approval handler is provided.
+    """
 
     def __init__(
         self,
@@ -477,9 +480,9 @@ class AppServerClient:
 
     def _default_approval_handler(self, method: str, params: JsonObject | None) -> JsonObject:
         if method == "item/commandExecution/requestApproval":
-            return {"decision": "accept"}
+            return {"decision": "decline"}
         if method == "item/fileChange/requestApproval":
-            return {"decision": "accept"}
+            return {"decision": "decline"}
         return {}
 
     def _start_stderr_drain_thread(self) -> None:
